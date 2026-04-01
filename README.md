@@ -140,6 +140,40 @@ https://freexcraft.com/dashboard/server/1ed88a77-8513-43f9-9d1e-3a0db85b84b5
 > SERVER_ID = "1ed88a77-8513-43f9-9d1e-3a0db85b84b5"  # 替换为你的服务器 ID
 > ```
 
+### 步骤 4: 开启自动化工作流
+
+创建文件：.github/workflows/run.yml
+name: Auto Renew FreeXCraft
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests httpx
+
+      - name: Run renewal script
+        env:
+          FXC_EMAIL: ${{ secrets.FXC_EMAIL }}
+          FXC_PASS: ${{ secrets.FXC_PASS }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python renew.py
+
 
 ## 🧠 工作原理（高级说明）
 
