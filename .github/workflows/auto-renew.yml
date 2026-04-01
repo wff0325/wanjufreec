@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Smart Run (Immediate for Manual, Random for Auto)
+      - name: Smart Run (Immediate for Manual, 10s Random for Auto)
         env:
           FXC_EMAIL: ${{ secrets.FXC_EMAIL }}
           FXC_PASS: ${{ secrets.FXC_PASS }}
@@ -28,13 +28,14 @@ jobs:
         run: |
           # 检查触发事件的类型
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "🚀 检测到手动触发，跳过延迟，立即执行续期！"
+            echo "🚀 检测到手动触发，立即执行续期！"
             python renew.py
           else
-            delay=$((1 + RANDOM % 3600))
+            # 随机等待 1 到 10 秒，不再傻等一小时
+            delay=$((1 + RANDOM % 10))
             printdate=$(date -d "+8 hours" "+%Y-%m-%d %H:%M:%S")
             echo "⏰ 定时任务触发 (北京时间: $printdate)"
-            echo "💤 为了模拟真人，将随机等待 $delay 秒..."
+            echo "💤 随机等待 $delay 秒后开始..."
             sleep $delay
             python renew.py
           fi
