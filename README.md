@@ -142,38 +142,52 @@ https://freexcraft.com/dashboard/server/1ed88a77-8513-43f9-9d1e-3a0db85b84b5
 
 ### 步骤 4: 开启自动化工作流
 
-创建文件：.github/workflows/run.yml
-name: Auto Renew FreeXCraft
+创建文件：`.github/workflows/run.yml`
+
+```yaml
+name: FreeXCraft Auto Renew
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-  workflow_dispatch:
+    - cron: '5 */4 * * *'
+  workflow_dispatch: # 手动触发按钮
 
 jobs:
   renew:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v3
+      
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install requests httpx
+        run: pip install requests
 
-      - name: Run renewal script
+      - name: Smart Run (Immediate for Manual, Random for Auto)
         env:
           FXC_EMAIL: ${{ secrets.FXC_EMAIL }}
           FXC_PASS: ${{ secrets.FXC_PASS }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-        run: python renew.py
+        run: |
+          # 检查触发事件的类型
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "🚀 检测到手动触发，跳过延迟，立即执行续期！"
+            python renew.py
+          else
+            delay=$((1 + RANDOM % 3600))
+            printdate=$(date -d "+8 hours" "+%Y-%m-%d %H:%M:%S")
+            echo "⏰ 定时任务触发 (北京时间: $printdate)"
+            echo "💤 为了模拟真人，将随机等待 $delay 秒..."
+            sleep $delay
+            python renew.py
+          fi
+```
 
+---
 
 ## 🧠 工作原理（高级说明）
 
