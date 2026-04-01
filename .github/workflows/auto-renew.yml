@@ -2,24 +2,37 @@ name: FreeXCraft Auto Renew
 
 on:
   schedule:
-    - cron: '0 */4 * * *'  # 每4小时运行一次
-  workflow_dispatch:
+    # 每 4 小时的第 5 分钟尝试触发 (UTC 时间)
+    # 实际运行时间 = 触发时间 + 随机延迟
+    - cron: '5 */4 * * *'
+  workflow_dispatch: # 保持手动触发按钮
 
 jobs:
   renew:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install dependencies
         run: pip install requests
-      - name: Run script
+
+      - name: Random Sleep & Run
         env:
           FXC_EMAIL: ${{ secrets.FXC_EMAIL }}
           FXC_PASS: ${{ secrets.FXC_PASS }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-        run: python renew.py
+        # 这里的 bash 命令会随机等待 1 到 3600 秒 (1小时)
+        # 这样你的续期时间点每次都会变动，非常像真人操作
+        run: |
+          delay=$((1 + RANDOM % 3600))
+          printdate=$(date -d "+8 hours" "+%Y-%m-%d %H:%M:%S")
+          echo "当前北京时间: $printdate"
+          echo "为了模拟真人，脚本将随机等待 $delay 秒后开始执行..."
+          sleep $delay
+          python renew.py
