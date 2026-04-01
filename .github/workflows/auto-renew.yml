@@ -3,10 +3,10 @@ name: FreeXCraft Auto Renew
 on:
   schedule:
     - cron: '0 */4 * * *'  # 每4小时运行一次
-  workflow_dispatch:       # 允许手动运行
+  workflow_dispatch:
 
 jobs:
-  build:
+  renew:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,10 +14,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pip install requests
-      - name: Run Script
+      - name: Run script
         env:
           FXC_EMAIL: ${{ secrets.FXC_EMAIL }}
           FXC_PASS: ${{ secrets.FXC_PASS }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: python renew.py
