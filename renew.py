@@ -27,32 +27,25 @@ def get_latest_action_id(session):
         url = f"https://freexcraft.com/dashboard/server/{SERVER_ID}"
         res = session.get(url, timeout=15)
         
-        # 1. 先从主页面尝试提取隐藏的 Action 定义
-        # Next.js 偶尔会将 Action ID 存在 self.__next_f.push 的字符串里
+        # 1. 尝试从 HTML 源码中提取
         html_ids = re.findall(r'[a-f0-9]{40}', res.text)
         if html_ids:
-            # 排除掉常用的公共 Hash
-            likely_id = [i for i in html_ids if i != "0000000000000000000000000000000000000000"]
+            likely_id =[i for i in html_ids if i != "0000000000000000000000000000000000000000"]
             if likely_id:
                 print(f"✨ 在 HTML 源码中发现 ID: {likely_id[0][:8]}...")
                 return likely_id[0]
 
         # 2. 深入 JS 块分析
         js_paths = re.findall(r'/_next/static/chunks/[^"]+\.js', res.text)
-        # 优先级：page -> layout -> 其他
         sorted_chunks = sorted(js_paths, key=lambda x: ('page' not in x, 'layout' not in x))
         
         print(f"🔎 正在分析核心 JS 块 (共 {len(js_paths)} 个)...")
-        for js_path in sorted_chunks[:20]: # 增加扫描深度到 20 个
+        for js_path in sorted_chunks[:20]:
             js_res = session.get(f"https://freexcraft.com{js_path}", timeout=10)
             if js_res.status_code == 200:
-                # 寻找 40 位哈希
                 ids = re.findall(r'[a-f0-9]{40}', js_res.text)
                 if ids:
-                    # 过滤掉一些明显的静态资源哈希（如果长度正好 40 的话）
-                    # 续期 ID 通常在 JS 里作为对象的 key 或 value 出现
                     for potential in ids:
-                        # 只要找到一个 40 位哈希就返回，这是目前最稳妥的自动策略
                         print(f"🎯 从 JS 块 [{js_path.split('/')[-1]}] 捕获 ID: {potential[:8]}...")
                         return potential
                             
@@ -118,7 +111,7 @@ def run_task():
     action_id = get_latest_action_id(session)
 
     # 4. 执行续期
-    time.sleep(5)
+    time.sleep(2)
     print(f"🛠️ 正在执行续期...")
     
     action_headers = {
@@ -136,7 +129,7 @@ def run_task():
         return
 
     print(f"🎉 续期指令已发送，正在验证数据...")
-    time.sleep(10)
+    time.sleep(5)
 
     # 5. 验证并推送
     info_headers = {"apikey": SUPABASE_ANON_KEY, "Authorization": f"Bearer {access_token}"}
@@ -147,14 +140,23 @@ def run_task():
         deadline = parse_time(data.get('renewal_deadline'))
         if deadline:
             remaining = deadline - datetime.now(timezone.utc)
+            hours = int(remaining.total_seconds() // 3600)
+            minutes = int((remaining.total_seconds() % 3600) // 60)
+            
             report = (
                 f"✅ <b>FreeXCraft 自动续期成功</b>\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
                 f"🖥 <b>服务器:</b> <code>{data.get('name')}</code>\n"
-                f"⏰ <b>剩余寿命:</b> <code>{int(remaining.total_seconds() // 3600)}小时</code>\n"
+                f"⏰ <b>剩余寿命:</b> <code>{hours}小时 {minutes}分钟</code>\n"
                 f"📅 <b>到期时间:</b> <code>{(deadline + timedelta(hours=8)).strftime('%m-%d %H:%M')}</code>\n"
                 f"🆔 <b>使用的ID:</b> <code>{action_id[:8]}...</code>\n"
                 f"━━━━━━━━━━━━━━━━━━"
             )
             send_tg_notification(report)
             print("✅ 任务完成")
+        else:
+            print("⚠️ 无法解析时间字段。")
+
+# ================= 就是差了下面这两行 =================
+if __name__ == "__main__":
+    run_task()
