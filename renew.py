@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timezone, timedelta
 
 # ================= 核心配置 =================
-SERVER_ID = "1ed88a77-8513-43f9-9d1e-3a0db85b84b5"
+SERVER_ID = "c2c11e40-1821-47c2-bd50-5651cdcbf268"
 ACTION_ID = "40f34f412fbff5791ab05264298fe5d6879efba201" 
 SUPABASE_URL = "https://aeilbxxjgrnnqmtwnesh.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlaWxieHhqZ3JubnFtdHduZXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMTY4NjUsImV4cCI6MjA4Njg5Mjg2NX0.ZuGQzVsHX8nnvo1JFoBCOokEjaW-no-QKEe_yco7kUA"
